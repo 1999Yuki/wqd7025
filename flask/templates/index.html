@@ -9,6 +9,12 @@
     >
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <title>House Price Prediction</title>
+    <style>
+      .section-title{font-weight:600;font-size:1.1rem}
+      .hint{font-size:.85rem;color:#6c757d}
+      .readonly{background:#f8f9fa}
+      .chip{font-size:.75rem;padding:.2rem .5rem;border-radius:9999px;background:#eef2ff;color:#3b5bdb}
+    </style>
   </head>
   <body class="bg-light">
     <div class="container py-5">
@@ -16,74 +22,127 @@
         <div class="card-body">
           <h1 class="card-title text-center mb-4">House Price Prediction</h1>
 
+          {% set auto_fields = [
+            'Density people / km²',
+            'Distance to Nearest CBD (km)',
+            'Distance to Singapore (km)',
+            'entertainment_count'
+          ] %}
+
           <form method="post">
-            <div class="row g-3">
 
-              <!-- Numeric inputs -->
-              {% for feat in numeric_features %}
-              <div class="col-md-4">
-                <label class="form-label">{{ feat.replace('_', ' ') }}</label>
-                <input
-                  type="number"
-                  step="any"
-                  name="{{ feat }}"
-                  class="form-control"
-                  value="{{ defaults[feat] if defaults[feat] is defined else '' }}"
-                  required
-                >
-              </div>
-              {% endfor %}
-
-              <!-- Boolean selects -->
-              {% for feat in boolean_features %}
-              <div class="col-md-4">
-                <label class="form-label">{{ feat }}</label>
-                <select name="{{ feat }}" class="form-select">
-                  <option value="1" {% if defaults[feat]|int == 1 %}selected{% endif %}>Yes</option>
-                  <option value="0" {% if defaults[feat]|int == 0 %}selected{% endif %}>No</option>
-                </select>
-              </div>
-              {% endfor %}
-
-              <!-- Property Type dropdown -->
-              <div class="col-md-6">
-                <label class="form-label">Property Type</label>
-                <select name="property_type" class="form-select">
-                  {% for col in property_type_columns %}
-                  <option value="{{ col }}" {% if defaults['property_type'] == col %}selected{% endif %}>
-                    {{ col.replace('Property Type_', '') }}
-                  </option>
-                  {% endfor %}
-                </select>
+            <!-- ====== Section A: Location & Auto-filled fields ====== -->
+            <div class="mb-4 p-3 border rounded-3">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="section-title mb-0">Location & Context</div>
+                <span class="chip">Auto-filled</span>
               </div>
 
-              <!-- Property Description dropdown -->
-              <div class="col-md-6">
-                <label class="form-label">Property Description</label>
-                <select name="property_description" class="form-select">
-                  {% for col in property_desc_columns %}
-                  <option value="{{ col }}" {% if defaults['property_description'] == col %}selected{% endif %}>
-                    {{ col.replace('Property_description_', '') }}
-                  </option>
-                  {% endfor %}
-                </select>
-              </div>
+              <div class="row g-3">
+                <!-- Location dropdown -->
+                <div class="col-md-6">
+                  <label class="form-label">Location</label>
+                  <select name="location" class="form-select" id="location-select">
+                    {% for col in location_columns %}
+                      <option value="{{ col }}" {% if defaults['location'] == col %}selected{% endif %}>
+                        {{ col.replace('Location_', '') }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <div class="hint mt-1">Changing the location will auto-update the four fields on the right.</div>
+                </div>
 
-              <!-- Location dropdown -->
-              <div class="col-md-6">
-                <label class="form-label">Location</label>
-                <select name="location" class="form-select" id="location-select">
-                  {% for col in location_columns %}
-                  <option value="{{ col }}" {% if defaults['location'] == col %}selected{% endif %}>
-                    {{ col.replace('Location_', '') }}
-                  </option>
-                  {% endfor %}
-                </select>
+                <!-- The 3 distances + entertainment_count (read-only) -->
+                <div class="col-md-6">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label">entertainment count</label>
+                      <input type="number" step="any" name="entertainment_count"
+                             class="form-control readonly"
+                             value="{{ defaults['entertainment_count'] if defaults['entertainment_count'] is defined else '' }}"
+                             readonly>
+                    </div>
+                    <div class="col-md-12">
+                      <label class="form-label">Density people / km²</label>
+                      <input type="number" step="any" name="Density people / km²"
+                             class="form-control readonly"
+                             value="{{ defaults['Density people / km²'] if defaults['Density people / km²'] is defined else '' }}"
+                             readonly>
+                    </div>
+                    <div class="col-md-12">
+                      <label class="form-label">Distance to Nearest CBD (km)</label>
+                      <input type="number" step="any" name="Distance to Nearest CBD (km)"
+                             class="form-control readonly"
+                             value="{{ defaults['Distance to Nearest CBD (km)'] if defaults['Distance to Nearest CBD (km)'] is defined else '' }}"
+                             readonly>
+                    </div>
+                    <div class="col-md-12">
+                      <label class="form-label">Distance to Singapore (km)</label>
+                      <input type="number" step="any" name="Distance to Singapore (km)"
+                             class="form-control readonly"
+                             value="{{ defaults['Distance to Singapore (km)'] if defaults['Distance to Singapore (km)'] is defined else '' }}"
+                             readonly>
+                    </div>
+                  </div>
+                </div>
               </div>
-
             </div>
 
-            <div class="d-grid mt-4">
+            <!-- ====== Section B: Other numeric inputs ====== -->
+            <div class="mb-4">
+              <div class="section-title mb-3">Property & Features</div>
+              <div class="row g-3">
+                {% for feat in numeric_features %}
+                  {% if feat not in auto_fields %}
+                  <div class="col-md-4">
+                    <label class="form-label">{{ feat.replace('_', ' ') }}</label>
+                    <input
+                      type="number"
+                      step="any"
+                      name="{{ feat }}"
+                      class="form-control"
+                      value="{{ defaults[feat] if defaults[feat] is defined else '' }}"
+                      required
+                    >
+                  </div>
+                  {% endif %}
+                {% endfor %}
+
+                {% for feat in boolean_features %}
+                <div class="col-md-4">
+                  <label class="form-label">{{ feat }}</label>
+                  <select name="{{ feat }}" class="form-select">
+                    <option value="1" {% if defaults[feat]|int == 1 %}selected{% endif %}>Yes</option>
+                    <option value="0" {% if defaults[feat]|int == 0 %}selected{% endif %}>No</option>
+                  </select>
+                </div>
+                {% endfor %}
+
+                <div class="col-md-6">
+                  <label class="form-label">Property Type</label>
+                  <select name="property_type" class="form-select">
+                    {% for col in property_type_columns %}
+                    <option value="{{ col }}" {% if defaults['property_type'] == col %}selected{% endif %}>
+                      {{ col.replace('Property Type_', '') }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Property Description</label>
+                  <select name="property_description" class="form-select">
+                    {% for col in property_desc_columns %}
+                    <option value="{{ col }}" {% if defaults['property_description'] == col %}selected{% endif %}>
+                      {{ col.replace('Property_description_', '') }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid">
               <button type="submit" class="btn btn-primary btn-lg">Predict Price</button>
             </div>
           </form>
@@ -97,39 +156,34 @@
       </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- 联动脚本：根据 Location 自动填充 3 个数值字段 -->
+    <!-- 联动脚本：根据 Location 自动填充 4 个只读字段 -->
     <script>
-      // 后端传来的 Python dict → JSON
       const LOC_DEFAULTS = {{ location_defaults | tojson | safe }};
 
-      // 工具：按 name 精确选中输入框
       function setFieldValue(fieldName, value) {
         const el = document.querySelector(`input[name="${fieldName}"]`);
-        if (el != null) {
+        if (el && value !== undefined && value !== null) {
           el.value = value;
         }
       }
 
-      // 应用某个 location 的默认数值
       function applyLocationDefaults(locKey) {
         const m = LOC_DEFAULTS[locKey];
         if (!m) return;
         setFieldValue('Density people / km²', m['Density people / km²']);
         setFieldValue('Distance to Nearest CBD (km)', m['Distance to Nearest CBD (km)']);
         setFieldValue('Distance to Singapore (km)', m['Distance to Singapore (km)']);
+        if ('entertainment_count' in m) {
+          setFieldValue('entertainment_count', m['entertainment_count']);
+        }
       }
 
       document.addEventListener('DOMContentLoaded', function () {
         const locationSelect = document.getElementById('location-select');
-
         if (locationSelect) {
-          // 初次加载先同步一次
           applyLocationDefaults(locationSelect.value);
-
-          // 变更时联动更新
           locationSelect.addEventListener('change', function (e) {
             applyLocationDefaults(e.target.value);
           });
